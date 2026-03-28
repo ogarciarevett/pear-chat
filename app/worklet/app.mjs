@@ -30,16 +30,20 @@ const getMemberId = (peer) => {
     : 'invalid'
 }
 
+// Track joined topics to prevent duplicate swarm joins
+const joinedTopics = new Set()
+
 const joinSwarm = async (topicBuffer) => {
-  // Join the swarm with the topic. Setting both client/server to true means that this app can act as both.
+  const topicHex = b4a.toString(topicBuffer, 'hex')
+  if (joinedTopics.has(topicHex)) return true
   const discovery = swarm.join(topicBuffer, { client: true, server: true })
-  return await discovery.flushed()
+  await discovery.flushed()
+  joinedTopics.add(topicHex)
+  return true
 }
 
 const createRoom = async () => {
-  // Generate a new random topic (32 byte string)
   const topicBuffer = crypto.randomBytes(32)
-  // Create a new chat room for the topic
   const done = await joinSwarm(topicBuffer)
   const topic = done ? b4a.toString(topicBuffer, 'hex') : ''
   return { done, topic }
@@ -49,8 +53,7 @@ const joinRoom = async (topicStr) => {
   try {
     const topicBuffer = b4a.from(topicStr, 'hex')
     const done = await joinSwarm(topicBuffer)
-    const topic = done ? b4a.toString(topicBuffer, 'hex') : ''
-    return { done, topic }
+    return { done, topic: topicStr }
   } catch (error) {
     return { done: false, topic: 'err' }
   }
@@ -81,10 +84,12 @@ const rpc = new RPC(BareKit.IPC, async (req) => {
     case API_CREATE_ROOM:
       const { done, topic } = await createRoom()
       if (done) broadcastRoomAnnouncement(topic)
+      updatePeersCount(swarm.connections.size)
       req.reply(JSON.stringify({done, topic}))
       break
     case API_JOIN_ROOM:
       const { done: joined, topic: joinTopic } = await joinRoom(text)
+      updatePeersCount(swarm.connections.size)
       req.reply(JSON.stringify({done: joined, topic: joinTopic}))
       break
     case API_SEND_MESSAGE:
@@ -146,8 +151,12 @@ swarm.on('connection', (peer) => {
   peer.on('error', e => console.error(`Connection error: ${e}`))
 })
 
-// When there's updates to the swarm, update the peers count
+// When there's updates to the swarm, update the peers count (only on change)
+let lastPeersCount = 0
 swarm.on('update', () => {
-  console.log(`[info] Number of connections is now ${swarm.connections.size}`)
-  updatePeersCount(swarm.connections.size)
+  const count = swarm.connections.size
+  if (count === lastPeersCount) return
+  lastPeersCount = count
+  console.log(`[info] Number of connections is now ${count}`)
+  updatePeersCount(count)
 })

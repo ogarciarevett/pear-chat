@@ -13,7 +13,7 @@ function RoomDiscoveryListener() {
   const dispatch = useAppDispatch()
 
   useEffect(() => {
-    const listener = uiEvent.on(ROOM_DISCOVERED_UI, ({ topic }) => {
+    const handler = ({ topic }) => {
       dispatch(roomAdded({
         id: topic,
         createdAt: Date.now(),
@@ -21,8 +21,9 @@ function RoomDiscoveryListener() {
         isOwner: false,
         discovered: true,
       }))
-    })
-    return () => listener.off()
+    }
+    uiEvent.on(ROOM_DISCOVERED_UI, handler)
+    return () => uiEvent.off(ROOM_DISCOVERED_UI, handler)
   }, [dispatch])
 
   return null

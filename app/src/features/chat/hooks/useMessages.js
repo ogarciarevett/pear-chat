@@ -20,7 +20,7 @@ export function useMessages() {
   const groupedMessages = useAppSelector(selectGroupedMessages)
 
   useEffect(() => {
-    const listener = uiEvent.on(RECEIVE_MESSAGE_UI, ({ memberId, message }) => {
+    const handler = ({ memberId, message }) => {
       dispatch(
         messageAdded({
           id: generateId(),
@@ -31,11 +31,10 @@ export function useMessages() {
           memberId,
         })
       )
-    })
-
-    return () => {
-      listener.off()
     }
+
+    uiEvent.on(RECEIVE_MESSAGE_UI, handler)
+    return () => uiEvent.off(RECEIVE_MESSAGE_UI, handler)
   }, [dispatch])
 
   const sendMessage = useCallback(

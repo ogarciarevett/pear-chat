@@ -12,12 +12,9 @@ export function useChatRoom() {
   const [peersCount, setPeersCount] = useState(0)
 
   useEffect(() => {
-    const peerCountListener = uiEvent.on(CONNECTIONS_UI, (count) => {
-      setPeersCount(Number(count) || 0)
-    })
-    return () => {
-      peerCountListener.off()
-    }
+    const handler = (count) => setPeersCount(Number(count) || 0)
+    uiEvent.on(CONNECTIONS_UI, handler)
+    return () => uiEvent.off(CONNECTIONS_UI, handler)
   }, [])
 
   const leaveRoom = useCallback(() => {
