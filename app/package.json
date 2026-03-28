@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@expo/metro-runtime": "55.0.7",
+    "@reduxjs/toolkit": "^2.11.2",
     "b4a": "1.8.0",
     "bare-events": "2.8.2",
     "bare-rpc": "1.2.0",
@@ -26,6 +27,7 @@
     "react-native": "0.84.1",
     "react-native-bare-kit": "0.13.1",
     "react-native-web": "0.21.2",
+    "react-redux": "^9.2.0",
     "tiny-emitter": "2.1.0"
   },
   "devDependencies": {

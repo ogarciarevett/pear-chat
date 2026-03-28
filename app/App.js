@@ -1,12 +1,15 @@
+import { Provider } from 'react-redux'
 import BareProvider from './src/component/BareProvider'
-import HomeScreen from './src/screen/HomeScreen'
-
+import ChatScreen from './src/features/chat/ChatScreen'
+import { store } from './src/store'
 import { rpcHandler } from './src/lib/rpc'
 
 export default function App() {
   return (
-    <BareProvider rpcHandler={rpcHandler}>
-      <HomeScreen/>
-    </BareProvider>
-  );
+    <Provider store={store}>
+      <BareProvider rpcHandler={rpcHandler}>
+        <ChatScreen />
+      </BareProvider>
+    </Provider>
+  )
 }
