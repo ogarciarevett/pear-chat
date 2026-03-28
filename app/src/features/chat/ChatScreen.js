@@ -1,13 +1,13 @@
-import React, { useState, useCallback, useRef } from 'react'
+import React, { useCallback, useRef } from 'react'
 import {
   StyleSheet,
   Text,
-  TextInput,
   View,
   KeyboardAvoidingView,
   TouchableOpacity,
   Platform,
   SafeAreaView,
+  Share,
 } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { FlashList } from '@shopify/flash-list'
@@ -19,56 +19,22 @@ import { useMessages } from './hooks/useMessages'
 import { useChatRoom } from './hooks/useChatRoom'
 import { isSameDay } from '../../utils/formatTime'
 
-const ChatHeader = React.memo(({ topic, peersCount }) => (
+const ChatHeader = React.memo(({ topic, peersCount, onBack, onShare }) => (
   <View style={styles.header}>
+    <TouchableOpacity onPress={onBack} style={styles.backButton}>
+      <Text style={styles.backButtonText}>&#8249;</Text>
+    </TouchableOpacity>
     <View style={styles.headerInfo}>
       <Text style={styles.headerTitle} numberOfLines={1}>Chat Room</Text>
       <Text style={styles.headerSubtitle}>
         {peersCount} peer{peersCount !== 1 ? 's' : ''} connected
       </Text>
     </View>
+    <TouchableOpacity onPress={() => onShare(topic)} style={styles.shareButton}>
+      <Text style={styles.shareButtonText}>Share</Text>
+    </TouchableOpacity>
   </View>
 ))
-
-const LobbyScreen = React.memo(({ onCreateRoom, onJoinRoom }) => {
-  const [topicInput, setTopicInput] = useState('')
-
-  return (
-    <View style={styles.lobbyContainer}>
-      <View style={styles.lobbyContent}>
-        <Text style={styles.lobbyTitle}>PearBare Chat</Text>
-        <Text style={styles.lobbySubtitle}>Peer-to-peer encrypted messaging</Text>
-
-        <TouchableOpacity style={styles.createButton} onPress={onCreateRoom}>
-          <Text style={styles.createButtonText}>Create Room</Text>
-        </TouchableOpacity>
-
-        <View style={styles.divider}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>or</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <View style={styles.joinGroup}>
-          <TextInput
-            value={topicInput}
-            onChangeText={setTopicInput}
-            style={styles.topicInput}
-            placeholder="Enter room topic..."
-            placeholderTextColor="#666"
-          />
-          <TouchableOpacity
-            style={[styles.joinButton, !topicInput.trim() && styles.buttonDisabled]}
-            onPress={() => topicInput.trim() && onJoinRoom(topicInput.trim())}
-            disabled={!topicInput.trim()}
-          >
-            <Text style={styles.joinButtonText}>Join</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  )
-})
 
 function buildFlatList(groupedMessages) {
   const items = []
@@ -97,7 +63,7 @@ function buildFlatList(groupedMessages) {
 }
 
 const ChatScreen = () => {
-  const { backend, roomTopic, peersCount, createRoom, joinRoom } = useChatRoom()
+  const { backend, roomTopic, peersCount, leaveRoom } = useChatRoom()
   const { groupedMessages, sendMessage } = useMessages()
   const listRef = useRef(null)
 
@@ -107,6 +73,10 @@ const ChatScreen = () => {
     (text) => sendMessage(text, backend),
     [sendMessage, backend]
   )
+
+  const handleShare = useCallback(async (topic) => {
+    await Share.share({ message: topic })
+  }, [])
 
   const renderItem = useCallback(({ item }) => {
     if (item.type === 'date') {
@@ -124,28 +94,21 @@ const ChatScreen = () => {
   const keyExtractor = useCallback((item) => item.id, [])
 
   const handleContentSizeChange = useCallback(() => {
-    if (listRef.current && flatItems.length > 0) {
-      listRef.current.scrollToEnd({ animated: true })
-    }
+    listRef.current?.scrollToEnd({ animated: true })
   }, [flatItems.length])
-
-  if (!roomTopic) {
-    return (
-      <SafeAreaView style={styles.container}>
-        <StatusBar style="light" />
-        <LobbyScreen onCreateRoom={createRoom} onJoinRoom={joinRoom} />
-      </SafeAreaView>
-    )
-  }
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
-      <ChatHeader topic={roomTopic} peersCount={peersCount} />
+      <ChatHeader
+        topic={roomTopic}
+        peersCount={peersCount}
+        onBack={leaveRoom}
+        onShare={handleShare}
+      />
       <KeyboardAvoidingView
         style={styles.chatArea}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <View style={styles.listContainer}>
           <FlashList
@@ -180,13 +143,27 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
   },
   header: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 10,
     backgroundColor: '#0d0d1a',
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: '#2a2a3a',
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 28,
+    color: '#0088cc',
+    fontWeight: '300',
+  },
   headerInfo: {
+    flex: 1,
     alignItems: 'center',
   },
   headerTitle: {
@@ -199,84 +176,15 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.5)',
     marginTop: 2,
   },
-  lobbyContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 32,
+  shareButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
   },
-  lobbyContent: {
-    alignItems: 'center',
-  },
-  lobbyTitle: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: '#ffffff',
-    marginBottom: 8,
-  },
-  lobbySubtitle: {
-    fontSize: 15,
-    color: 'rgba(255,255,255,0.5)',
-    marginBottom: 40,
-  },
-  createButton: {
-    width: '100%',
-    paddingVertical: 14,
-    backgroundColor: '#0088cc',
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  createButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: '#2a2a3a',
-  },
-  dividerText: {
-    color: 'rgba(255,255,255,0.3)',
-    marginHorizontal: 12,
-    fontSize: 13,
-  },
-  joinGroup: {
-    flexDirection: 'row',
-    width: '100%',
-    gap: 8,
-  },
-  topicInput: {
-    flex: 1,
-    height: 48,
-    borderWidth: 1,
-    borderColor: '#2a2a3a',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    color: '#e0e0e0',
-    backgroundColor: '#1a1a2e',
+  shareButtonText: {
     fontSize: 14,
-  },
-  joinButton: {
-    paddingHorizontal: 20,
-    height: 48,
-    backgroundColor: '#0088cc',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  joinButtonText: {
-    color: '#fff',
-    fontSize: 15,
-    fontWeight: '600',
-  },
-  buttonDisabled: {
-    opacity: 0.4,
+    fontWeight: '500',
+    color: '#0088cc',
   },
 })
 

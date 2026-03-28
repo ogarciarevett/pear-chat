@@ -1,6 +1,6 @@
 import b4a from 'b4a'                 // Module for buffer-to-string and vice-versa conversions
 
-import uiEvent, { CONNECTIONS_UI, RECEIVE_MESSAGE_UI } from './uiEvent'
+import uiEvent, { CONNECTIONS_UI, RECEIVE_MESSAGE_UI, ROOM_DISCOVERED_UI } from './uiEvent'
 import {
   API_PING,
   API_REVERSE,
@@ -9,6 +9,7 @@ import {
   API_SEND_MESSAGE,
   API_RECEIVE_MESSAGE,
   API_UPDATE_CONNECTIONS,
+  API_ROOM_DISCOVERED,
 } from '../../worklet/api'
 
 // RPCs receiver from worklet to UI
@@ -27,6 +28,12 @@ export const rpcHandler = async (req) => {
       const count = b4a.toString(req.data, 'utf8')
       if (__DEV__) console.log('current peer cnt:', count)
       uiEvent.emit(CONNECTIONS_UI, count)
+      break
+    }
+    case API_ROOM_DISCOVERED: {
+      const topic = b4a.toString(req.data, 'utf8')
+      if (__DEV__) console.log('room discovered:', topic.substring(0, 12))
+      uiEvent.emit(ROOM_DISCOVERED_UI, { topic })
       break
     }
     default:

@@ -8,8 +8,11 @@ export const API_JOIN_ROOM = 'join_room'
 export const API_SEND_MESSAGE ='send_message'
 export const API_RECEIVE_MESSAGE = 'receive_message'
 export const API_UPDATE_CONNECTIONS = 'update_connections'
+export const API_ROOM_DISCOVERED = 'room_discovered'
 
+let msgCounter = 0
 export const createMessage = (msg, local = false) => ({
+  id: `${Date.now()}-${++msgCounter}`,
   timestamp: new Date(),
   message: msg,
   local,

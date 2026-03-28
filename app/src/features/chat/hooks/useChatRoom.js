@@ -1,10 +1,14 @@
 import { useState, useCallback, useEffect } from 'react'
 import { useBackend } from '../../../component/BareProvider'
+import { useAppDispatch, useAppSelector } from '../../../store/hooks'
+import { selectActiveRoomId, activeRoomCleared } from '../../../store/slices/roomsSlice'
+import { messagesCleared } from '../../../store/slices/messagesSlice'
 import uiEvent, { CONNECTIONS_UI } from '../../../lib/uiEvent'
 
 export function useChatRoom() {
   const backend = useBackend()
-  const [roomTopic, setRoomTopic] = useState('')
+  const dispatch = useAppDispatch()
+  const roomTopic = useAppSelector(selectActiveRoomId)
   const [peersCount, setPeersCount] = useState(0)
 
   useEffect(() => {
@@ -16,30 +20,15 @@ export function useChatRoom() {
     }
   }, [])
 
-  const handleTopic = useCallback((topic) => setRoomTopic(topic), [])
-
-  const createRoom = useCallback(() => {
-    if (backend) {
-      backend.createRoom(handleTopic)
-    }
-  }, [backend, handleTopic])
-
-  const joinRoom = useCallback(
-    (topicInput) => {
-      if (backend && topicInput) {
-        const topic = topicInput.replace('Topic: ', '')
-        handleTopic(topic)
-        backend.joinRoom(topic, handleTopic)
-      }
-    },
-    [backend, handleTopic]
-  )
+  const leaveRoom = useCallback(() => {
+    dispatch(messagesCleared())
+    dispatch(activeRoomCleared())
+  }, [dispatch])
 
   return {
     backend,
     roomTopic,
     peersCount,
-    createRoom,
-    joinRoom,
+    leaveRoom,
   }
 }

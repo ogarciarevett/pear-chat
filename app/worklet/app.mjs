@@ -12,6 +12,7 @@ import {
   API_SEND_MESSAGE,
   API_RECEIVE_MESSAGE,
   API_UPDATE_CONNECTIONS,
+  API_ROOM_DISCOVERED,
   createMessage,
 } from './api'
 
@@ -19,6 +20,9 @@ const swarm = new Hyperswarm()
 
 const version = '0.1.0'
 console.log('bare version', version)
+
+// Deterministic lobby topic for P2P room discovery
+const LOBBY_TOPIC = crypto.data(b4a.from('pearbarchat-lobby-v1'))
 
 const getMemberId = (peer) => {
   return peer
@@ -76,6 +80,7 @@ const rpc = new RPC(BareKit.IPC, async (req) => {
       break
     case API_CREATE_ROOM:
       const { done, topic } = await createRoom()
+      if (done) broadcastRoomAnnouncement(topic)
       req.reply(JSON.stringify({done, topic}))
       break
     case API_JOIN_ROOM:
@@ -104,13 +109,38 @@ const updatePeersCount = (count) => {
   req.send(String(count))
 }
 
+// Dedup messages arriving via multiple swarm connections (lobby + room)
+const seenMessageIds = new Set()
+
+const broadcastRoomAnnouncement = (topic) => {
+  const announcement = JSON.stringify({ type: 'room_announced', topic })
+  for (const peer of swarm.connections) peer.write(announcement)
+}
+
+const forwardRoomDiscovery = (topic) => {
+  const req = rpc.request(API_ROOM_DISCOVERED)
+  req.send(topic)
+}
+
+// Join lobby on startup for P2P room discovery
+joinSwarm(LOBBY_TOPIC).then(() => console.log('[lobby] joined discovery network'))
+
 // When there's a new connection, listen for new messages, and emit them to the UI
 swarm.on('connection', (peer) => {
   const memberId = getMemberId(peer)
   console.log(`[info] New peer joined, ${memberId}`)
 
   peer.on('data', event => {
-    // console.log(`peer data ${memberId}`, msg)
+    const str = b4a.toString(event, 'utf8')
+    try {
+      const parsed = JSON.parse(str)
+      if (parsed.type === 'room_announced') {
+        forwardRoomDiscovery(parsed.topic)
+        return
+      }
+      if (parsed.id && seenMessageIds.has(parsed.id)) return
+      if (parsed.id) seenMessageIds.add(parsed.id)
+    } catch {}
     receivedMessage(memberId, event)
   })
   peer.on('error', e => console.error(`Connection error: ${e}`))
