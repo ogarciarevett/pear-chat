@@ -55,6 +55,24 @@ if (shouldCreateSwarm) {
 
 rl.input.setMode(tty.constants.MODE_RAW) // Enable raw input mode for efficient key reading
 rl.on('data', line => {
+  const trimmed = line.trim()
+  if (trimmed === '/help') {
+    console.log('\nAvailable commands:')
+    console.log('  /help   - Show this help message')
+    console.log('  /clear  - Clear the terminal screen')
+    console.log('  /quit   - Exit the application\n')
+    rl.prompt()
+    return
+  }
+  if (trimmed === '/clear') {
+    console.clear()
+    rl.prompt()
+    return
+  }
+  if (trimmed === '/quit') {
+    process.kill(process.pid, 'SIGINT')
+    return
+  }
   sendMessage(line)
   rl.prompt()
 })
@@ -83,6 +101,8 @@ async function joinChatRoom (topicStr) {
 }
 
 function appendMessage ({ memberId, event }) {
-  // Output chat msgs to terminal
-  console.log(`[${memberId}] ${event?.message}`)
+  const now = new Date()
+  const hh = now.getHours().toString().padStart(2, '0')
+  const mm = now.getMinutes().toString().padStart(2, '0')
+  console.log(`[${hh}:${mm}] ${memberId}: ${event?.message}`)
 }

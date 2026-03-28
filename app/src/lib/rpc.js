@@ -13,21 +13,22 @@ import {
 
 // RPCs receiver from worklet to UI
 export const rpcHandler = async (req) => {
-  console.log('from worklet:', req.command)
-  // console.log(JSON.stringify(req))
+  if (__DEV__) console.log('from worklet:', req.command)
   switch(req.command) {
-    case API_RECEIVE_MESSAGE:
+    case API_RECEIVE_MESSAGE: {
       const data = JSON.parse(b4a.toString(req.data, 'utf8'))
       const message = JSON.parse(data?.event)
       const memberId = data?.memberId
-      console.log('got message:', message)
+      if (__DEV__) console.log('got message:', message)
       uiEvent.emit(RECEIVE_MESSAGE_UI, { memberId, message })
       break
-    case API_UPDATE_CONNECTIONS:
+    }
+    case API_UPDATE_CONNECTIONS: {
       const count = b4a.toString(req.data, 'utf8')
-      console.log('current peer cnt:', count)
+      if (__DEV__) console.log('current peer cnt:', count)
       uiEvent.emit(CONNECTIONS_UI, count)
       break
+    }
     default:
       break
   }
@@ -53,7 +54,7 @@ export const getBackend = (rpc) => ({
     req.send('Create Room!')
     req.reply('utf8').then((res) => {
       const {done, topic} = JSON.parse(res)
-      console.log(done ? `[info] Created new chat room: ${topic}`:`[info] Create fail`)
+      if (__DEV__) console.log(done ? `[info] Created new chat room: ${topic}`:`[info] Create fail`)
       callback(topic)
     })
   },
@@ -63,7 +64,7 @@ export const getBackend = (rpc) => ({
     req.send(topic)
     req.reply('utf8').then((res) => {
       const {done, topic} = JSON.parse(res)
-      console.log(done ? `[info] Joined chat room`:`[info] Joined fail`)
+      if (__DEV__) console.log(done ? `[info] Joined chat room`:`[info] Joined fail`)
       callback(topic)
     })
   },
