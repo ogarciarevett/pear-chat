@@ -1,4 +1,19 @@
-# PearBareChat
+<div align="center">
+
+<img src="assets/pear-chat.svg" width="180" alt="pear-chat: a pear-shaped chat bubble with three message dots">
+
+# pear-chat
+
+**Peer-to-peer chat for the terminal and mobile.**
+
+[![MIT License](https://img.shields.io/badge/license-MIT-62A87C)](LICENSE) [![JavaScript](https://img.shields.io/badge/language-JavaScript-E4C75B)](terminal/) [![Peer-to-peer](https://img.shields.io/badge/chat-peer--to--peer-418F87)](app/worklet/app.mjs)
+
+Works with **Pear** · **Expo** · **Hyperswarm**
+
+</div>
+
+---
+
 Interoperatable peer-to-peer Chat sample across desktop (Windows, Mac, Linux), terminal, and mobile (Android &amp; iOS)
   <img width="1060" height="979" alt="Screenshot 2026-03-28 at 18 24 31" src="https://github.com/user-attachments/assets/9a3b03dd-95e0-499c-80d9-fa19d236ccc6" />
   
