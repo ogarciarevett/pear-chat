@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-labelledby="title">
+  <title id="title">A pear-shaped chat bubble</title>
+  <path d="M99 54c0-14 4-25 11-32" fill="none" stroke="#24362e" stroke-width="7" stroke-linecap="round"/>
+  <path d="M106 44c-1-23 20-29 39-26-3 21-20 32-39 26z" fill="#63b9a0" stroke="#24362e" stroke-width="5" stroke-linejoin="round"/>
+  <path d="M101 49c-25 0-25 31-39 49-12 15-24 29-24 46 0 25 21 39 55 39h10l30 9-3-16c22-5 33-17 33-35 0-19-15-34-28-49-13-15-10-43-34-43z" fill="#c3e47e" stroke="#24362e" stroke-width="6" stroke-linejoin="round"/>
+  <path d="M62 139c0-10 5-18 13-26" fill="none" stroke="#f7ffe6" stroke-width="7" stroke-linecap="round"/>
+  <circle cx="86" cy="142" r="6" fill="#24362e"/>
+  <circle cx="108" cy="142" r="6" fill="#24362e"/>
+  <circle cx="130" cy="142" r="6" fill="#24362e"/>
+</svg>
