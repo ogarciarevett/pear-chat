@@ -14,6 +14,17 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24.22.1"
-      - name: Check JavaScript syntax without launching applications
+      - name: Install the app's locked JavaScript parser without lifecycle scripts
+        run: npm ci --ignore-scripts --prefix app
+      - name: Parse JavaScript and JSX without launching apps or peers
         run: |
-          git ls-files -z '*.js' '*.mjs' '*.cjs' | xargs -0 -r -n 1 node --check
+          node <<'JS'
+          const { createRequire } = require('node:module');
+          const { readFileSync } = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+          const appRequire = createRequire(process.cwd() + '/app/package.json');
+          const parser = appRequire('@babel/parser');
+          const files = execFileSync('git', ['ls-files', '-z', '*.js', '*.mjs', '*.cjs']).toString().split('\0').filter(Boolean);
+          for (const file of files) parser.parse(readFileSync(file, 'utf8'), { sourceType: 'unambiguous', plugins: ['jsx'] });
+          console.log(`Parsed ${files.length} JavaScript/JSX files`);
+          JS
